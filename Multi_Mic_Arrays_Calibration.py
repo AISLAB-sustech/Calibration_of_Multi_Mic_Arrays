@@ -286,7 +286,7 @@ if  __name__ == "__main__":
                 if norm_dx>100:
                     break
                 if display_norm_dx_on:
-                    print("total norm(dx) = ", norm_dx)
+                    print("norm(dx) = ", norm_dx)
                     norm_list.append(norm_dx)
                 if  norm_dx<epsilon:
                     break

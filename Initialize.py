@@ -241,8 +241,8 @@ def get_value():
     # 1. Estimation of sound source position
     L = measure_info[1][0][0]                                          # the fist distance of moving
     measure_DOA_data = np.array(measure_info[::2])[:, 0][:, 1:]        # the DOA measurements of the 1st mic
-    src_rad1 = measure_DOA_data[0]@ measure_DOA_data[1].T/(norm(measure_DOA_data[0])*norm(measure_DOA_data[0]))
-    src_rad2 = measure_DOA_data[1]@ np.array([1,0,0]).T/(norm(measure_DOA_data[0]))
+    src_rad1 = measure_DOA_data[0]@ measure_DOA_data[1].T/(norm(measure_DOA_data[0])*norm(measure_DOA_data[1]))
+    src_rad2 = measure_DOA_data[1]@ np.array([1,0,0]).T/(norm(measure_DOA_data[1]))
 
     d_11 = L*np.sin(np.arccos(src_rad2))/np.sin(np.arccos(src_rad1))
     src_pos = d_11*measure_DOA_data[0]
@@ -271,7 +271,7 @@ def get_value():
                 point_A,point_B,point_C,point_D = src_pos[i:i+4]
 
             param = angle_bottom_edg(ori_A, ori_B, ori_C, ori_D,point_A,point_B,point_C,point_D)
-            X0 = [2, 2, 2, 3]
+            X0 = [2, 2, 2, 2]
             try:
                 h = least_squares(solve_b, X0, args=param,bounds=(0, 10))
                 mic_i_b = np.append(mic_i_b, h.x)
@@ -279,10 +279,10 @@ def get_value():
                 point_E,point_F = src_pos[0:2]
                 ori_E, ori_F = measure_DOA_data[0:2]
                 param = angle_bottom_edg(ori_A, ori_B, ori_E, ori_F, point_A, point_B, point_E, point_F)
-                h = least_squares(solve_b, X0, args=param)
+                h = least_squares(solve_b, X0, args=param,bounds=(0, 10))
                 mic_i_b = np.append(mic_i_b, h.x[0:2])
                 param = angle_bottom_edg(ori_C, ori_D, ori_E, ori_F, point_C, point_D, point_E, point_F)
-                h = least_squares(solve_b, X0, args=param)
+                h = least_squares(solve_b, X0, args=param,bounds=(0, 10))
                 mic_i_b = np.append(mic_i_b, h.x[0:2])
         b.append(mic_i_b)
 
