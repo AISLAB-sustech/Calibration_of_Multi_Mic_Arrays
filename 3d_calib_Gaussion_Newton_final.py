@@ -9,7 +9,7 @@ from  numpy.linalg import norm
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import time
-from ICP import *
+from Initialize import *
 import scipy.io
 
 def vertical_merge(matrix_block):
@@ -178,7 +178,6 @@ def linearize_pose_landmark_constraint(x,l,measurement,toidx,mic_num):
     return e, A , B
     # A 7X40
     # B 7X3
-
 
 def info_matrix(mic_num):
     TDOA_var = 2.3e8

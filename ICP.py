@@ -1,7 +1,6 @@
 # create general route
 
 import random
-# import jax.numpy as np
 import numpy as np
 from  numpy.linalg import norm
 from numpy import sin as s
@@ -12,10 +11,7 @@ import matplotlib as mpl
 import math
 from scipy.optimize import leastsq,least_squares
 import scipy.io
-import turtle
 
-random.seed(1)
-np.random.seed(1)
 # 每个麦克风b 应该大于0, 如果存在某个麦克风b 小于0 , 则该麦克风 初始值太大
 def cal_d_ik(mic_num,init_choices,measure_info,sound_speed,a,x,interval):
     b = []
@@ -268,7 +264,7 @@ def get_value():
     add_measure_noise =True
     odo_measure = True
     fig = False
-    TDOA_FIG = False
+    TDOA_FIG = True
 
     # init error
     mic_pose_std = 0.3    # unit (m)
@@ -352,7 +348,7 @@ def get_value():
     # turtle.end_fill()
     # turtle.done()
     # np.save("wujaioxing_np",traj2)
-    orient_option = np.load("wujaioxing_np.npy")
+    orient_option = np.load("Pentagram_track.npy")
     ###################################################################
 
 
@@ -557,7 +553,7 @@ def get_value():
             plt.plot(np.linspace(1,len(random_choices)+1,len(random_choices)+1),initial_mic_asyn[i][0]+np.linspace(1,len(random_choices)+1,len(random_choices)+1)*initial_mic_asyn[i][1] , label="True")
             # # plt.scatter(np.linspace(1,len(random_choices)+1,len(random_choices)+1), fx, label="Noise")
             plt.plot(np.linspace(1,len(random_choices)+1,len(random_choices)+1),x[i * 8 + 6]+np.linspace(1,len(random_choices)+1,len(random_choices)+1)*x[i * 8 + 7] , label="EST")
-            plt.scatter(np.linspace(1,len(random_choices)+1,len(random_choices)+1), measure_TDOA_data[:,i][:,0]-(b_i-a)/sound_speed, label="$T_i^k-(l_i^k-l_1^k)/c$")
+            plt.scatter(np.linspace(1,len(random_choices)+1,len(random_choices)+1), measure_TDOA_data[:,i][:,0]-(b_i-a)/sound_speed, label="$T_i^k-(\hat{d}_i^k-\hat{d}_1^k)/c$")
             plt.legend(fontsize = 17)
             # plt.title("the {}-th mic".format(str(i+1)))
             plt.title("the i-th mic",fontsize = 20)
