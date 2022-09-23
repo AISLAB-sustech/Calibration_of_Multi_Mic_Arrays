@@ -148,7 +148,7 @@ def get_value():
     init_choices = [0]
     random_choices = init_choices+random.choices([0,1,2,3,4,5],weights=[1,1,1,1,1,1], k=time_steps-1-len(init_choices))
     # Ten random trajectories in paper
-    # random_choices = np.load("dataset_10_traj/random_np4.npy")
+    # random_choices = np.load("10_trajectories/random_np4.npy")
     # Pentagram track in paper
     random_choices = list(range(119))
     orient_option = np.load("Pentagram_track.npy")
@@ -245,7 +245,8 @@ def get_value():
     src_rad2 = measure_DOA_data[1]@ np.array([1,0,0]).T/(norm(measure_DOA_data[1]))
 
     d_11 = L*np.sin(np.arccos(src_rad2))/np.sin(np.arccos(src_rad1))
-    src_pos = d_11*measure_DOA_data[0]
+    src_pos = np.zeros((0,3))
+    src_pos = np.vstack((src_pos,d_11*measure_DOA_data[0]))
     for i in range(len(random_choices)):
         src_pos = np.vstack((src_pos,src_pos[-1]+measure_info[2*i+1]))
 

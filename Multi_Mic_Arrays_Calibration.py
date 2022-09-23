@@ -251,7 +251,6 @@ if  __name__ == "__main__":
         print("the {} iter MONTE CARLO **********************".format(i))
         # A. Initial Value Selection
         x,measures,ID,mic_num,x_gt = get_value()
-        x_ICP = x.copy()
         norm_list = []
 
         # Store all initial values
