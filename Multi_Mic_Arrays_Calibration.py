@@ -277,9 +277,9 @@ if  __name__ == "__main__":
                     elif theta[0] <-180:
                         x[mic_num * 8 + 3] = theta[0] + 360
                     if theta[2] >180:
-                        x[mic_num * 8 + 5] = theta[0]-360
+                        x[mic_num * 8 + 5] = theta[2]-360
                     elif theta[2] <-180:
-                        x[mic_num * 8 + 5] = theta[0] + 360
+                        x[mic_num * 8 + 5] = theta[2] + 360
 
                 norm_dx = norm(dx)
                 if norm_dx>100:
