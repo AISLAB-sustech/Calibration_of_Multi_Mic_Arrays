@@ -267,20 +267,17 @@ if  __name__ == "__main__":
             for Iter in range(numIterations):
                 # solve the dx
                 [dx,H] = linearize_and_solve_with_H(x,measures,ID,mic_num)
-                end = time.time()
-
                 x = x +dx
                 for mic in range(1, mic_num):
-                    theta = np.append(ini_delta_mic_theta, x[mic_num * 8 + 3:mic_num * 8 + 6])
+                    theta = x[mic * 8 + 3:mic * 8 + 6].reshape(3)
                     if theta[0] >180:
-                        x[mic_num * 8 + 3] = theta[0]-360
+                        x[mic * 8 + 3] = theta[0] - 360
                     elif theta[0] <-180:
-                        x[mic_num * 8 + 3] = theta[0] + 360
+                        x[mic * 8 + 3] = theta[0] + 360
                     if theta[2] >180:
-                        x[mic_num * 8 + 5] = theta[2]-360
+                        x[mic * 8 + 5] = theta[2] - 360
                     elif theta[2] <-180:
-                        x[mic_num * 8 + 5] = theta[2] + 360
-
+                        x[mic * 8 + 5] = theta[2] + 360
                 norm_dx = norm(dx)
                 if norm_dx>100:
                     break
