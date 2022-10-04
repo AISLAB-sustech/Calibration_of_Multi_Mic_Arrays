@@ -106,22 +106,23 @@ def plot_axis(ax,origin_x,ax_vec_x,origin_y,ax_vec_y,origin_z,ax_vec_z,theta,tra
         fig = ax.plot(x4[:, 0], x4[:, 1], x4[:, 2], c='r')
         fig = ax.plot(y4[:, 0], y4[:, 1], y4[:, 2], c='g')
         fig = ax.plot(z4[:, 0], z4[:, 1], z4[:, 2], c='b')
+
     elif type == "estimate":
         fig = ax.plot(x4[:, 0], x4[:, 1], x4[:, 2], c=(1.00,0.61,0.61))
         fig = ax.plot(y4[:, 0], y4[:, 1], y4[:, 2], c=(0.61,0.90,0.61))
         fig = ax.plot(z4[:, 0], z4[:, 1], z4[:, 2], c=(0.59,0.75,0.95))
-    return ax,fig
+    return ax,fig,x4[0]
 
-def plot_result(x,x_gt,mic_num):
-    fig = plt.figure(figsize=plt.figaspect(1))
+def plot_result(x,x_gt,mic_num,title):
+    fig = plt.figure(figsize=(8,6),dpi=100) #(figsize=plt.figaspect(1))
     ax = plt.axes(projection='3d')
-    ax.set_title("3D")
+    ax.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
+    ax.w_yaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
+    ax.w_zaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
+    ax.set_title(title)
     ax.set_xlabel("X/m")
     ax.set_ylabel("Y/m")
     ax.set_zlabel("Z/m")
-    ax.set_xlim(-1, 2)
-    ax.set_ylim(-1, 2)
-    ax.set_zlim(-1, 2)
 
     # Base coordinate system
     # x axis
@@ -145,59 +146,56 @@ def plot_result(x,x_gt,mic_num):
     fig3 = ax.plot(x3, y3, z3, c='b')
     frame_3 = zip(x3, y3, z3)
     [origin_z, ax_vec_z] = list(frame_3)
+    ax.scatter(0, 0, 0, c='r', marker='o', label="Mic. pos. g.t.",s=10)
 
     # Plotting the true and initial values of the microphone array
     for i in range(1, mic_num):
         # True values
         pos = x_gt[8 * i:8 * i + 3].reshape(3)
         theta = x_gt[8 * i + 3:8 * i + 6].reshape(3)
-        ax, fig = plot_axis(ax, origin_x, ax_vec_x, origin_y, ax_vec_y, origin_z, ax_vec_z, theta, pos, type="real")
+        ax, fig,origin = plot_axis(ax, origin_x, ax_vec_x, origin_y, ax_vec_y, origin_z, ax_vec_z, theta, pos, type="real")
+        ax.scatter(origin[0], origin[1], origin[2], c='r', marker='o',s=10)
 
         # initial values
         pos = x[8 * i:8 * i + 3].reshape(3)
         theta = x[8 * i + 3:8 * i + 6].reshape(3)
-        ax, fig = plot_axis(ax, origin_x, ax_vec_x, origin_y, ax_vec_y, origin_z, ax_vec_z, theta, pos, type="estimate")
+        ax, fig,origin = plot_axis(ax, origin_x, ax_vec_x, origin_y, ax_vec_y, origin_z, ax_vec_z, theta, pos, type="estimate")
+        if i == 1:
+            ax.scatter(origin[0], origin[1], origin[2], c='g', marker='s', label="Mic. pos. est.",s=10)
+        else:
+            ax.scatter(origin[0], origin[1], origin[2], c='g', marker='s',s=10)
 
     # True values
-    real = ax.plot3D(x_gt[8 * mic_num::3].reshape(-1),
-                     x_gt[8 * mic_num + 1::3].reshape(-1),
-                     x_gt[8 * mic_num + 2::3].reshape(-1),
-                     linewidth=1.0
-                     )
-
+    ax.plot3D(x_gt[8 * mic_num::3].reshape(-1),
+             x_gt[8 * mic_num + 1::3].reshape(-1),
+             x_gt[8 * mic_num + 2::3].reshape(-1),
+             color = 'blue',marker="x",linewidth=0.5,label="sound source position",markersize=4
+             )
     # initial values
     ax.scatter(x[8 * mic_num::3],
                x[8 * mic_num + 1::3],
                x[8 * mic_num + 2::3],
-               marker="x", c="red"
+               marker="s", color=(0.00,1.00,1.00),label='estimated src. pos.',s=10
                )
-    methods = ('g.t.', 'init')
-    color = ['b', 'r']
-    legend_lines = [mpl.lines.Line2D([0], [0], linestyle="none", marker='o', c=color[y]) for y in range(2)]
-    legend_labels = [methods[y] for y in range(2)]
-    ax.legend(legend_lines, legend_labels, numpoints=1)
+    ax.legend()
     plt.show()
 
     # plot time offset
     # # True values
-    plt.scatter(range(1, len(x_gt[8 + 6:mic_num * 8:8]) + 1), x_gt[8 + 6:mic_num * 8:8], marker='o', c='blue')
+    plt.scatter(range(1, len(x_gt[8 + 6:mic_num * 8:8]) + 1), x_gt[8 + 6:mic_num * 8:8], marker='o', c='blue',label='True')
     # initial values
-    plt.scatter(range(1, len(x[8 + 6:mic_num * 8:8]) + 1), x[8 + 6:mic_num * 8:8], marker='x', c='red')
-    legend_lines = [mpl.lines.Line2D([0], [0], linestyle="none", marker='o', c=color[y]) for y in range(2)]
-    legend_labels = [methods[y] for y in range(2)]
-    plt.legend(legend_lines, legend_labels, numpoints=1)
+    plt.scatter(range(1, len(x[8 + 6:mic_num * 8:8]) + 1), x[8 + 6:mic_num * 8:8], marker='x', c='red',label = 'estimate')
+    plt.legend()
     plt.title("Time offset")
     plt.show()
 
     # plot clock diff
     # # True values
-    plt.scatter(range(1, len(x_gt[8 + 7:mic_num * 8:8]) + 1), x_gt[8 + 7:mic_num * 8:8], marker='o', c='blue')
+    plt.scatter(range(1, len(x_gt[8 + 7:mic_num * 8:8]) + 1), x_gt[8 + 7:mic_num * 8:8], marker='o', c='blue',label='True')
     # initial values
-    plt.scatter(range(1, len(x[8 + 7:mic_num * 8:8]) + 1), x[8 + 7:mic_num * 8:8], marker='x', c='red')
-    legend_lines = [mpl.lines.Line2D([0], [0], linestyle="none", marker='o', c=color[y]) for y in range(2)]
-    legend_labels = [methods[y] for y in range(2)]
-    plt.legend(legend_lines, legend_labels, numpoints=1)
-    plt.title("clock diff")
+    plt.scatter(range(1, len(x[8 + 7:mic_num * 8:8]) + 1), x[8 + 7:mic_num * 8:8], marker='x', c='red',label = 'estimate')
+    plt.legend()
+    plt.title("Clock difference")
     plt.show()
 
 def distant_b(a,b):

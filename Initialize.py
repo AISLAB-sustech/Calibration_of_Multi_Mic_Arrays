@@ -9,23 +9,17 @@
 import random
 import numpy as np
 from  numpy.linalg import norm
-from numpy import sin as s
-from numpy import cos as c
-import matplotlib.pyplot as plt
-from mpl_toolkits import mplot3d
-import matplotlib as mpl
 from scipy.optimize import leastsq,least_squares
 import scipy.io
 from  utils import *
 from  parameter import  true_value
 
-def ICP(mic_num,time_steps,src_pos,measure_info,a,b):
+def ICP(mic_num,time_steps,src_pos,measure_info,b):
     """
     :param mic_num
     :param time_steps
     :param src_pos
     :param measure_info:
-    :param a: distance between the sound source position and the 1st mic
     :param b: distance between the sound source position and the i-th mic
     :return: mic position, mic Euler angles
     """
@@ -51,8 +45,7 @@ def ICP(mic_num,time_steps,src_pos,measure_info,a,b):
         W = W + q_list_T[:, i].reshape((3, 1)) @ q_prime_list[i].reshape((1, 3))
     rank = np.linalg.matrix_rank(W)
     if rank!=3:
-        print("W IS NOT FULL RANK")
-        raise (ValueError)
+        raise ValueError("W IS NOT FULL RANK")
     u, s, v = np.linalg.svd(W)
     R = u @ v
     xarr = inertial_p.reshape((3, 1)) - R@inertial_p_prime.reshape((3, 1))
@@ -60,7 +53,7 @@ def ICP(mic_num,time_steps,src_pos,measure_info,a,b):
     angle = angle/np.pi*180
     return xarr,angle
 
-def TDOA(dis_i_k,sound_speed,initial_mic_asyn,time_step,interval):
+def TDOA(dis_i_k,sound_speed,initial_mic_asyn,time_step,interval,i):
     '''
     :param dis_i_k: distance between the sound source position and the i-th mic
     :param sound_speed
@@ -69,19 +62,20 @@ def TDOA(dis_i_k,sound_speed,initial_mic_asyn,time_step,interval):
     :param interval
     :return: TDOA measurement
     '''
-    result = [float(dis_i_k[i]-dis_i_k[0])/sound_speed+ initial_mic_asyn[i][0]+time_step*interval*initial_mic_asyn[i][1]
-               for i in range(0,len(dis_i_k))]
+    result = float(dis_i_k[i]-dis_i_k[0])/sound_speed+ initial_mic_asyn[i][0]+time_step*interval*initial_mic_asyn[i][1]
     return result
 
-def DOA(R_T,S,X):
+def DOA(theta,S,X):
     '''
     :param R: rotation matrix
     :param S: source location
     :param X: array location
     :return: DOA measurement
     '''
+    R_T = rotation_matrix(theta)
+    X   = np.array(X)
     d = R_T@((S-X).reshape((3,1)))/distant(S,X)
-    return d
+    return d.T
 
 def fitting_func(x, p):
     """
@@ -132,89 +126,59 @@ def get_value():
     mic_pose_std, mic_rot_std, max_offset, max_clock_diff, src_pose_std,\
     TDOA_std, DOA_std, odo_std = true_value()
     mic_num = len(initial_mic_angle)
-
-    # init the sound source trajectories
-    orient_option = np.array([
-                    [1,0,0],
-                    [-1,0,0],
-                    [0,1,0],
-                    [0,-1,0],
-                    [0,0,1],
-                    [0,0,-1]]
-                             )/ 3
     s_k_real = np.array([
                     [0.5, 1 ,0]
                     ])
-    init_choices = [0]
-    random_choices = init_choices+random.choices([0,1,2,3,4,5],weights=[1,1,1,1,1,1], k=time_steps-1-len(init_choices))
     # Ten random trajectories in paper
     # random_choices = np.load("10_trajectories/random_np4.npy")
+
+    # init the sound source trajectories
+    # orient_option = np.array([
+    #     [1, 0, 0],
+    #     [-1, 0, 0],
+    #     [0, 1, 0],
+    #     [0, -1, 0],
+    #     [0, 0, 1],
+    #     [0, 0, -1]]
+    # ) / 3
+    # init_choices = [0]
+    # random_choices = init_choices+random.choices([0,1,2,3,4,5],weights=[1,1,1,1,1,1], k=time_steps-1-len(init_choices))
+
     # Pentagram track in paper
     random_choices = list(range(119))
     orient_option = np.load("Pentagram_track.npy")
-    # True distance of each mic from the sound source
-    dis_i_k = [[distant(s_k_real[-1],mic) for mic in initial_mic_location]]
 
-    # True TDOA & DOA value
-    '''
-    format:
-    TDOA:
-    [
-    [TDOA_K1 TDOA_K2],
-    [TDOA_K1 TDOA_K2],
-    ...,
-    ]
-    
-    DOA:
-    [
-    [DOA_K1 DOA_K2 ],
-    [ DOA_K1 DOA_K2],
-    ...,
-    ]
-    '''
-    T_i_k = [TDOA(dis_i_k[-1],sound_speed,initial_mic_asyn,1,interval)]
-    d_i_k = [[ DOA(rotation_matrix(initial_mic_angle[i]), s_k_real[-1] ,np.array(initial_mic_location[i]))\
-               for i in range(len(initial_mic_angle))]]
-
-
-    measure_info = [[]]         # measurement in paper
-    ID =[]                      # nodes of graph SLAM
-    for i in range(mic_num):
-        measure = np.insert(d_i_k[-1][i],0,T_i_k[-1][i])
-        TDOA_error = np.random.normal(0, TDOA_std)
-        DOA_error_x = np.random.normal(0, DOA_std)
-        DOA_error_y = np.random.normal(0, DOA_std)
-        DOA_error_z = np.random.normal(0, DOA_std)
-        noisy = np.array([TDOA_error, DOA_error_x, DOA_error_y, DOA_error_z])
-        measure = measure+noisy
-        measure_info[-1].append(measure)
-    ID.append([1,8*mic_num+1])
-
-    for i in range(time_steps-1):
-        ID.append([mic_num*8+1+3*i, mic_num*8+4+3*i])      # P-P constraint ID
-        choice = random_choices[i]
-        noisy_odo = np.random.normal(0, odo_std, (3, 1)).reshape(-1)
-        odo_info = np.array(orient_option[choice])
-        odo_info = odo_info + noisy_odo
-        measure_info.append([odo_info])
-        next_point = s_k_real[-1] + orient_option[choice]
-        dis_i_k.append([distant(next_point, mic) for mic in initial_mic_location])
-        T_i_k.append(TDOA(dis_i_k[-1], sound_speed, initial_mic_asyn, i+2, interval))
-        d_i_k.append([
-            DOA(rotation_matrix(initial_mic_angle[i]), next_point,np.array(initial_mic_location[i])) \
-              for i in range(len(initial_mic_angle))
-        ])
-        measure = [np.insert(d_i_k[-1][j], 0, T_i_k[-1][j]) for j in range (mic_num)]
-        for j in range((mic_num-1)):
+    # TDOA & DOA & Odometry measurement
+    measure_info = []  # measurement in paper
+    ID = []            # nodes of graph SLAM
+    for i in range(time_steps):
+        measure_info.append([])
+        dis_i_k = [distant(s_k_real[-1], mic) for mic in initial_mic_location]
+        T_i_k   = np.array([])
+        d_i_k   = np.zeros((0,3))
+        for j in range(mic_num):                                  # P-L constraint
+            T_i_k= np.append(T_i_k, TDOA(dis_i_k, sound_speed, initial_mic_asyn, i + 1, interval,j))
+            d_i_k= np.vstack((d_i_k,
+                                DOA(initial_mic_angle[j], s_k_real[-1],initial_mic_location[j])
+                              ))
             TDOA_error = np.random.normal(0, TDOA_std)
             DOA_error_x = np.random.normal(0, DOA_std)
             DOA_error_y = np.random.normal(0, DOA_std)
             DOA_error_z = np.random.normal(0, DOA_std)
             noisy = np.array([TDOA_error, DOA_error_x, DOA_error_y, DOA_error_z])
-            measure[j] = measure[j] + noisy
-        measure_info.append(measure)
-        ID.append([1, mic_num * 8 + 4 + 3 * i])            # P-L constraint ID
-        s_k_real = np.append(s_k_real,np.array([next_point]), axis=0)
+            measure = np.insert(d_i_k[j], 0, T_i_k[j])
+            measure = measure+noisy
+            measure_info[-1].append(measure)
+        ID.append([1, mic_num * 8 + 1 + 3 * i])
+        if i + 1 < time_steps:                                     # P-P constraint
+            choice    = random_choices[i]
+            noisy_odo = np.random.normal(0, odo_std, (3, 1)).reshape(-1)
+            odo_info  = np.array(orient_option[choice])
+            odo_info  = odo_info + noisy_odo
+            measure_info.append([odo_info])
+            next_point = s_k_real[-1] + orient_option[choice]
+            s_k_real = np.append(s_k_real, np.array([next_point]), axis=0)
+            ID.append([mic_num * 8 + 1 + 3 * i, mic_num * 8 + 4 + 3 * i])
 
     # True values of all unkown parameters in paper
     x_gt = np.zeros((8*mic_num+3*time_steps,1))
@@ -231,8 +195,10 @@ def get_value():
         # For Experiment 1: x = x_gt + Gaussion Noise
         # x[i*8:i*8+3]   = x_gt[i*8:i*8+3]+np.random.normal(0,mic_pose_std*3,(3,1))
         # x[i*8+3:i*8+6] = x_gt[i*8+3:i*8+6]+np.random.normal(0,mic_rot_std*3,(3,1))#(0,15*np.pi/180,(3,1))
-        x[i*8+6]       =np.random.uniform(0,max_offset)#x_gt[i*8+6]+np.random.normal(0,max_offset/10*3)
-        x[i*8+7]       =np.random.uniform(0,max_clock_diff)#x_gt[i*8+7]+np.random.normal(0,max_clock_diff/10*3)
+        # x[i*8+6]       =x_gt[i*8+6]+np.random.normal(0,max_offset/10*3)
+        # x[i*8+7]       =x_gt[i*8+7]+np.random.normal(0,max_clock_diff/10*3)
+        x[i*8+6]       =np.random.uniform(0,max_offset)
+        x[i*8+7]       =np.random.uniform(0,max_clock_diff)
 
     # For Experiment 1: x = x_gt + Gaussion Noise
     # for i in range(time_steps):
@@ -241,38 +207,41 @@ def get_value():
     # 1. Estimation of sound source position
     L = measure_info[1][0][0]                                          # the fist distance of moving
     measure_DOA_data = np.array(measure_info[::2])[:, 0][:, 1:]        # the DOA measurements of the 1st mic
+    #  triangulation
     src_rad1 = measure_DOA_data[0]@ measure_DOA_data[1].T/(norm(measure_DOA_data[0])*norm(measure_DOA_data[1]))
     src_rad2 = measure_DOA_data[1]@ np.array([1,0,0]).T/(norm(measure_DOA_data[1]))
-
     d_11 = L*np.sin(np.arccos(src_rad2))/np.sin(np.arccos(src_rad1))
+
     src_pos = np.zeros((0,3))
     src_pos = np.vstack((src_pos,d_11*measure_DOA_data[0]))
     for i in range(len(random_choices)):
         src_pos = np.vstack((src_pos,src_pos[-1]+measure_info[2*i+1]))
 
     #  fuse odometry and DOA info
-    a = np.array([norm(src_pos[i]) for i in range(len(random_choices)+1)])
-    src_pos_est_by_doa = np.array([a[i]* measure_DOA_data[i] for i  in range(len(measure_DOA_data))])
+    dis_frame_1 = np.array([norm(src_pos[i]) for i in range(len(random_choices)+1)])
+    src_pos_est_by_doa = np.array([dis_frame_1[i]* measure_DOA_data[i] for i  in range(len(measure_DOA_data))])
     src_pos = (src_pos+src_pos_est_by_doa)/2
-    a = np.array([norm(src_pos[i]) for i in range(len(random_choices)+1)])
+    dis_frame_1 = np.array([norm(src_pos[i]) for i in range(len(random_choices)+1)])
     for i in range(time_steps):
         x[i*3+8*mic_num:i*3+8*mic_num+3] = src_pos[i].reshape(3,1)
 
     # 2. Estimation of the distance between the sound source and i-th mic
     b = []
+    if time_steps%4 !=0:
+        raise ValueError("Todo: Adding non-integer multiples of information processing")
+
     for mic in range(1,mic_num):
         measure_DOA_data = np.array(measure_info[::2])[:, mic][:, 1:]      # the DOA measurements of the i-th mic
         mic_i_b = np.array([])
         for i in range(0,time_steps,4):
             if i+4-time_steps>0:
-                ori_A, ori_B, ori_C, ori_D = measure_DOA_data[time_steps-4:time_steps]
+                ori_A  , ori_B  , ori_C  , ori_D   = measure_DOA_data[time_steps-4:time_steps]
                 point_A, point_B, point_C, point_D = src_pos[time_steps-4:time_steps]
             else:
-                ori_A, ori_B, ori_C, ori_D = measure_DOA_data[i:i+4]
-                point_A,point_B,point_C,point_D = src_pos[i:i+4]
-
+                ori_A  , ori_B  , ori_C  , ori_D   = measure_DOA_data[i:i+4]
+                point_A, point_B, point_C, point_D = src_pos[i:i+4]
             param = angle_bottom_edg(ori_A, ori_B, ori_C, ori_D,point_A,point_B,point_C,point_D)
-            X0 = [2, 2, 2, 2]
+            X0 = [1, 1, 1, 1]
             try:
                 h = least_squares(solve_b, X0, args=param,bounds=(0, 10))
                 mic_i_b = np.append(mic_i_b, h.x)
@@ -287,13 +256,11 @@ def get_value():
                 mic_i_b = np.append(mic_i_b, h.x[0:2])
         b.append(mic_i_b)
 
-    # Todo: Adding non-integer multiples of information processing
-
     # 3. Estimation of microphone arrays positions and orientations
     # 4. Estimation of microphone arrays asynchronous parameters
     measure_TDOA_data = np.array(measure_info[::2])
     for i in range(1,mic_num):
-        xarr, angle = ICP(i, time_steps, src_pos, measure_info, a, b)
+        xarr, angle = ICP(i, time_steps, src_pos, measure_info, b)
         x[i * 8:i * 8 + 3] = xarr
         x[i * 8 + 3:i * 8 + 6] = angle.reshape(3, 1)
 
@@ -302,7 +269,7 @@ def get_value():
         init_clock_diff  = x[i*8+7]
         p0 = np.array([init_time_offset,init_clock_diff])
         b_i = b[i-1]
-        fx = measure_TDOA_data[:,i][:,0]-(b_i-a)/sound_speed
+        fx = measure_TDOA_data[:,i][:,0]-(b_i-dis_frame_1)/sound_speed
         fitting_result = leastsq(fitting_residuals, p0, args=(fx, np.linspace(1,len(random_choices)+1,len(random_choices)+1)))
         x[i * 8 + 6] = fitting_result[0][0]
         x[i * 8 + 7] = fitting_result[0][1]
@@ -311,12 +278,12 @@ def get_value():
         if TDOA_FIG:
             plt.plot(np.linspace(1,time_steps,time_steps),initial_mic_asyn[i][0]+np.linspace(1,time_steps,time_steps)*initial_mic_asyn[i][1] , label="True")
             plt.plot(np.linspace(1,time_steps,time_steps),x[i * 8 + 6]+np.linspace(1,time_steps,time_steps)*x[i * 8 + 7] , label="EST")
-            plt.scatter(np.linspace(1,time_steps,time_steps), measure_TDOA_data[:,i][:,0]-(b_i-a)/sound_speed, label="$T_i^k-(\hat{d}_i^k-\hat{d}_1^k)/c$")
+            plt.scatter(np.linspace(1,time_steps,time_steps), measure_TDOA_data[:,i][:,0]-(b_i-dis_frame_1)/sound_speed, label="$T_i^k-(\hat{d}_i^k-\hat{d}_1^k)/c$")
             plt.legend(fontsize = 17)
             plt.title("the i-th mic",fontsize = 20)
             plt.yticks(fontproperties='Times New Roman', size=15)
             plt.xticks(fontproperties='Times New Roman', size=18)
-            plt.savefig("the {}-th mic.svg".format(str(i+1)), dpi=750, format="svg")
+            # plt.savefig("the {}-th mic.svg".format(str(i+1)), dpi=750, format="svg")
             plt.show()
             plt.plot(np.linspace(1, time_steps, time_steps),b_i, label="Init", linewidth=5.0)
             plt.plot(np.linspace(1, time_steps, time_steps),[distant_b(src_pos[index_],initial_mic_location[i]) for index_ in range(time_steps)], label="True", linewidth=5.0)
@@ -325,7 +292,7 @@ def get_value():
             plt.show()
 
     if fig:
-        plot_result(x,x_gt,mic_num)
+        plot_result(x,x_gt,mic_num,title="Initial Results")
     return x,measure_info,ID,mic_num,x_gt
 
 if __name__=="__main__":

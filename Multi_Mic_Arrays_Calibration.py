@@ -286,9 +286,8 @@ if  __name__ == "__main__":
                     norm_list.append(norm_dx)
                 if  norm_dx<epsilon:
                     break
-
             if est_fig:
-                plot_result(x,x_gt,mic_num)
+                plot_result(x,x_gt,mic_num,title="Optimization Results")
             # scipy.io.savemat("dataset_10_traj/random_seed{}.mat".format(data_i), {'value': [x_ICP,x,x_gt]})
         except OverflowError:
             plt.show()

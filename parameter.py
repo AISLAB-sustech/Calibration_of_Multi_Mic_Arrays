@@ -41,7 +41,7 @@ def true_value():
     time_steps = 120
     interval = 1
     init_fig = True
-    TDOA_FIG = True
+    TDOA_FIG = False
 
     # init error
     mic_pose_std = 0.3    # unit (m)
@@ -62,6 +62,6 @@ def true_value():
 def config():
     numIterations = 50
     epsilon = 1e-4
-    data_seed = 3         # most of data_seed is 6 in paper
+    data_seed = 1         # most of data_seed is 6 in paper
     est_fig = True
     return numIterations,epsilon,data_seed, est_fig
