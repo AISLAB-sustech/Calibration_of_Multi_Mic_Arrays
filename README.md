@@ -7,7 +7,7 @@ This is an open-source project aimed at calibrating the extrinsic and intrinsic 
 #### Nonlinear optimization process
 ![gif](https://github.com/AISLAB-sustech/Calibration_of_Multi_Mic_Arrays/blob/main/iteration.gif)
 ## Real world Datasets(not essential)
-The [dataset](https://pan.baidu.com/s/1rnOPAfSz1G1ROJz8OHQ7Nw?pwd=MCAL) records video and odometer information (stereo cameras + IMU) during the movement of the mobile robot, as well as sound audio captured by four microphone arrays.
+The [dataset](https://pan.baidu.com/s/1rnOPAfSz1G1ROJz8OHQ7Nw?pwd=MCAL) records video and IMU information (stereo cameras + IMU) during the movement of the mobile robot, as well as sound audio captured by four microphone arrays.
 
 Download [dataset](https://pan.baidu.com/s/1rnOPAfSz1G1ROJz8OHQ7Nw?pwd=MCAL) to YOUR_DATASET_FOLDER and decompress it. Then, move the ROS_data to ./tools/1_visual_processing/ROS_data and move audio to ./tools/2_audio_processing/audio.
 
