@@ -1,3 +1,6 @@
+# Acknowledgement
+# https://speechbrain.readthedocs.io/en/latest/API/speechbrain.processing.multi_mic.html
+# https://github.com/BrownsugarZeer/Multi_SSL
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
