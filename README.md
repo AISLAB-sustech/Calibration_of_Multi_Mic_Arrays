@@ -20,12 +20,19 @@ We use [vins fusion](https://github.com/HKUST-Aerial-Robotics/VINS-Fusion) for v
 Please, cite the paper if you use the microphone arrays calibration codes or data for your research.
 
 ```bibtex
-@misc{he2023observability,
+@misc{2023observability,
   title={Observability Analysis of Graph SLAM-Based Joint Calibration of Multiple Microphone Arrays and Sound Source Localization},
   author={He, Yuanzheng and Wang, Jiang and Su, Daobilige and Nakadai, Kazuhiro and Wu, Junfeng and Huang, Shoudong and Li, Youfu and Kong, He},
   booktitle={2023 IEEE/SICE International Symposium on System Integration (SII)},
   pages={1--8},
   year={2023},
   organization={IEEE}
+}
+@article{2024calibration,
+  title={SLAM-based Joint Calibration of Multiple Asynchronous Microphone Arrays and Sound Source Localization},
+  author={Wang, Jiang and He, Yuanzheng and Su, Daobilige and Itoyama, Katsutoshi and Nakadai, Kazuhiro and Wu, Junfeng and Huang, Shoudong and Li, Youfu and Kong, He},
+  journal={IEEE Transactions on Robotics},
+  year={2024},
+  publisher={IEEE}
 }
 ```
