@@ -29,9 +29,9 @@ def distant(a,b):
     return (c[0]**2+c[1]**2+c[2]**2)**0.5
 
 def rotation_matrix(theta , type = "Trans"):
-    theta_x = theta[0]*np.pi/180
-    theta_y = theta[1]*np.pi/180
-    theta_z = theta[2]*np.pi/180
+    theta_x = float(theta[0]*np.pi/180)
+    theta_y = float(theta[1]*np.pi/180)
+    theta_z = float(theta[2]*np.pi/180)
     R_x = np.array([
         [1.0,0,0],
         [0,c(theta_x),-s(theta_x)],
