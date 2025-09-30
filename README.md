@@ -1,11 +1,27 @@
 # SLAM-Based Joint Calibration of Multiple Asynchronous Microphone Arrays and Sound Source Localization
-This is an open-source project aimed at calibrating the extrinsic and intrinsic parameters of multi-microphone arrays.
-## USAGE
-#### python Multi_Mic_Arrays_Calibration.py
-#### Calibration process
-![gif](https://github.com/AISLAB-sustech/Calibration_of_Multi_Mic_Arrays/blob/master/calibration_process.gif)
-#### Nonlinear optimization process
-![gif](https://github.com/AISLAB-sustech/Calibration_of_Multi_Mic_Arrays/blob/master/iteration.gif)
+This is an open-source project aimed at calibrating the spatio-temporal extrinsic parameters of multi-microphone arrays.
+
+<div align="center">
+    <img src="fig/framework.jpg" width = 38% >
+    <img src="fig/Realworld.jpg" width = 55% >
+</div>
+
+## Run the Examples:
+```bash
+pip install -r ./requirements.txt
+python Multi_Mic_Arrays_Calibration.py
+```
+### Calibration process
+<div align="center">
+    <img src="fig/calibration_process.gif" width = 48% >
+</div>
+
+### Nonlinear optimization process
+
+<div align="center">
+    <img src="fig/iteration.gif" width = 40% >
+</div>
+
 ## Real world Datasets(not essential)
 The [dataset](https://pan.baidu.com/s/1rnOPAfSz1G1ROJz8OHQ7Nw?pwd=MCAL) records video and IMU information (stereo cameras + IMU) during the movement of the mobile robot, as well as sound audio captured by four microphone arrays.
 
